@@ -1,5 +1,5 @@
 brainfuck: brainfuck.c
-	gcc -o brainfuck brainfuck.c
+	gcc -O3 -o brainfuck brainfuck.c
 
 clear:
 	rm a.out
