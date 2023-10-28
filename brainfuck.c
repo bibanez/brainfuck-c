@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
     char *file = malloc(file_size);
     lseek(fd, 0, SEEK_SET);
     read(fd, file, file_size);
+    close(fd);
 
     // Precompile jumps
     int jump[file_size]; // a much better solution would be an unordered map
