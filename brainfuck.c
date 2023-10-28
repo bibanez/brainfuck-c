@@ -24,6 +24,32 @@ int main(int argc, char *argv[]) {
     lseek(fd, 0, SEEK_SET);
     read(fd, file, file_size);
 
+    // Precompile jumps
+    int jump[file_size]; // a much better solution would be an unordered map
+    for (int i = 0; i < file_size; ++i) {
+        // a better algorithm would be to have a running stack
+        if (file[i] == '[') {
+            int left = 1;
+            int j = i;
+            while (left) {
+                switch (file[++j]) {
+                    case '[': {
+                        ++left;
+                        break;
+                    }
+                    case ']': {
+                        --left;
+                        break;
+                    }
+                }
+            }
+            jump[i] = j - i;
+            jump[j] = i - j;
+        } else if (file[i] != ']') {
+            jump[i] = 0;
+        }
+    }
+
     char array[30000]; // initialized at 0 by the compiler
     char *cell = array;
 
@@ -55,39 +81,12 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case '[': {
-                if (!(*cell)) {
-                    int left = 1;
-                    while (left) {
-                        switch (file[++index]) {
-                            case '[': {
-                                ++left;
-                                break;
-                            }
-                            case ']': {
-                                --left;
-                                break;
-                            }
-                        }
-                    }
-                }
+                if (!(*cell)) index += jump[index];
                 break;
             }
             case ']': {
-                if (*cell) {
-                    int right = 1;
-                    while (right) {
-                        switch (file[--index]) {
-                            case '[': {
-                                --right;
-                                break;
-                            }
-                            case ']': {
-                                ++right;
-                                break;
-                            }
-                        }
-                    }
-                }
+                if (*cell) index += jump[index]; 
+                break;
             }
         }
         ++index;
