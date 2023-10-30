@@ -67,7 +67,6 @@ int main(int argc, char *argv[]) {
     read(fd, file, file_size);
     close(fd);
 
-
     // 1st pass: Calculate # of actions
     int action_size = 0;
     Operation state = NOOP;
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
             case '.':
                 switch (state) {
                     case NOOP:
-                    case CELL_OFFSET:
+                    case CELL_ADD:
                         state = OUTPUT;
                         break;
                     default:
@@ -252,7 +251,7 @@ int main(int argc, char *argv[]) {
                         curr->op = OUTPUT;
                         curr->value = 0;
                         break;
-                    case CELL_OFFSET:
+                    case CELL_ADD:
                         curr->op = OUTPUT;
                         break;
                     default:
@@ -287,7 +286,7 @@ int main(int argc, char *argv[]) {
                 read(1, cell, 1);
                 break;
             case OUTPUT:
-                cell += action[index].value;
+                *cell += action[index].value;
                 write(1, cell, 1);
                 break;
         }
