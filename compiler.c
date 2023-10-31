@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/wait.h>
 
 typedef enum {
     CELL_OFFSET,
@@ -43,15 +44,29 @@ int pop() {
     return x;
 }
 
+void error_usage(char *path) {
+    char msg[250];
+    int len = sprintf(msg, "Usage: %s file [-o outfile]\n", path);
+    write(2, msg, len);
+    exit(1);
+}
+
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        char msg[250];
-        sprintf(msg, "Usage: %s file\n", argv[0]);
-        write(2, msg, strlen(msg));
-        return 1;
+    if (argc != 2 && argc != 4) error_usage(argv[0]);
+
+    int in_file_argv = -1;
+    int out_file_argv = -1;
+    if (argc == 4) {
+        if (strcmp(argv[1], "-o") == 0) {
+            in_file_argv = 3;
+            out_file_argv = 2;
+        } else if (strcmp(argv[2], "-o") == 0) {
+            in_file_argv = 1;
+            out_file_argv = 3;
+        } else error_usage(argv[0]);
     }
 
-    int fd = open(argv[1], O_RDONLY);
+    int fd = open(argv[in_file_argv], O_RDONLY);
     if (fd < 0) {
         char msg[] = "File non existent\n";
         write(2, msg, strlen(msg));
@@ -298,5 +313,18 @@ int main(int argc, char *argv[]) {
 
     len += sprintf(buff+len, "}\n");
     write(fdout, buff, len);
-    return 0;
+    close(fdout);
+
+    int pid = fork();
+    if (pid == 0) {
+        if (out_file_argv == -1)
+            execlp("gcc", "gcc", "-O3", "output.c", (char *)NULL);
+        else {
+            execlp("gcc", "gcc", "-O3", "-o", argv[out_file_argv], "output.c", (char *)NULL);
+        }
+    }
+    else {
+        waitpid(-1, NULL, 0);
+        execlp("rm", "rm", "output.c", (char *)NULL);
+    }
 }
