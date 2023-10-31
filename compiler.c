@@ -262,32 +262,41 @@ int main(int argc, char *argv[]) {
     }
     free(file);
 
-    char array[30000]; // initialized at 0 by the compiler
-    char *cell = array;
+    int fdout = open("./output.c", O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
+    
+    char buff[1000000];
+    int len = sprintf(buff, "#include <stdio.h>\n#include <unistd.h>\nint main() {char array[30000];char *cell = array;");
 
-    int index = 0;
-    while (index < action_size) {
-        switch (action[index].op) {
+    for (int i = 0; i < action_size; ++i) {
+        switch (action[i].op) {
             case CELL_ADD:
-                *cell += action[index].value;
+                len += sprintf(buff+len, "*cell += %d;", action[i].value);
                 break;
             case CELL_OFFSET:
-                cell += action[index].value;
+                len += sprintf(buff+len, "cell += %d;", action[i].value);
                 break;
             case JUMP:
-                if ((action[index].value < 0 && *cell) || (action[index].value > 0 && !(*cell)))
-                    index += action[index].value;
+                if (action[i].value > 0) {
+                    len += sprintf(buff+len, "while(*cell) {");
+                } else {
+                    len += sprintf(buff+len, "}");
+                }
                 break;
             case INPUT:
-                cell += action[index].value;
-                read(1, cell, 1);
+                if (action[i].value != 0)
+                    len += sprintf(buff+len, "cell += %d;", action[i].value);
+                len += sprintf(buff+len, "read(1, cell, 1);");
                 break;
             case OUTPUT:
-                *cell += action[index].value;
-                write(1, cell, 1);
+                if (action[i].value != 0)
+                    len += sprintf(buff+len, "*cell += %d;", action[i].value);
+                len += sprintf(buff+len, "write(1, cell, 1);");
                 break;
         }
-        ++index;
     }
+    free(action);
+
+    len += sprintf(buff+len, "}\n");
+    write(fdout, buff, len);
     return 0;
 }
