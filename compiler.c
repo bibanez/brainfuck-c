@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
 
     int fdout = open("./output.c", O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
     
-    char buff[1000000];
+    char *buff = malloc(50*action_size);
     int len = sprintf(buff, "#include <stdio.h>\n#include <unistd.h>\nint main() {char array[30000];char *cell = array;");
 
     for (int i = 0; i < action_size; ++i) {
